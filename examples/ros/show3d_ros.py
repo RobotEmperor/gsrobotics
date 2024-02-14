@@ -29,7 +29,7 @@ def main(argv):
 
     # Set flags
     SAVE_VIDEO_FLAG = False
-    GPU = False
+    GPU = True
     MASK_MARKERS_FLAG = True
     USE_ROI = False
     PUBLISH_ROS_PC = True
