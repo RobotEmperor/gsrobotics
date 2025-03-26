@@ -15,6 +15,8 @@ import gsdevice
 import gs3drecon
 import ros_numpy
 
+from std_msgs.msg import Float64
+
 def get_diff_img(img1, img2):
     return np.clip((img1.astype(int) - img2.astype(int)), 0, 255).astype(np.uint8)
 
@@ -84,6 +86,8 @@ def main(argv):
         gelpcd = open3d.geometry.PointCloud()
         gelpcd.points = open3d.utility.Vector3dVector(points)
         gelpcd_pub = rospy.Publisher("/gsmini_pcd", PointCloud2, queue_size=10)
+        gs_max_z_pub = rospy.Publisher("/gsmini_max_z", Float64, queue_size=1)
+        gs_max_z_msg = 0
 
     if USE_ROI:
         roi = cv2.selectROI(f0)
@@ -119,7 +123,7 @@ def main(argv):
                 vis3d.update(dm)
 
             if PUBLISH_ROS_PC:
-                print ('publishing ros point cloud')
+                #print ('publishing ros point cloud')
                 dm_ros = copy.deepcopy(dm) * mpp
                 ''' publish point clouds '''
                 header = std_msgs.msg.Header()
@@ -132,9 +136,12 @@ def main(argv):
 
 
                 xyz_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(gelpcdros)
+                gs_max_z_msg = np.max(xyz_array[:,2])
+                gs_max_z_pub.publish(gs_max_z_msg)
+
                 np.shape(xyz_array)
 
-                print(np.shape(xyz_array))
+                #print(np.shape(xyz_array))
 
 
             #if cv2.waitKey(1) & 0xFF == ord('q'):
