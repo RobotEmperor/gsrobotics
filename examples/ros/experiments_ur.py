@@ -14,14 +14,41 @@ rtde_r = RTDEReceive("192.168.1.125")
 
 # Parameters
 dt = 1.0/500  # 2ms
-
+ratio = 0.05
 init_pose = rtde_r.getActualTCPPose()
-#print(rtde_r.getActualQ())
-init_q = np.array([-0.07116967836488897, -2.2907940349974574, -1.6120822429656982, -1.0600456160357972, 0.8726012706756592, 0.6463595032691956])
+print(init_pose)
+close_init_pose = np.array([0.5599339422822445, -0.42228169821362205, -0.1739, -1.5464600006003504, 2.7065177497577166, 5.733511603223481e-05])
 
-joint_q = init_q
-joint_speed = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-ratio = 0.8
+far_init_pose = np.array([0.5599339422822445, -0.42228169821362205, -0.16, -1.5464600006003504, 2.7065177497577166, 5.733511603223481e-05])
+
+rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
+
+print("init")
+
+rtde_c.moveL(close_init_pose, 0.1*ratio, 0.1*ratio)
+
+print("close")
+
+goal_pose = np.array([0.0, 0.0, -0.002, 0.0, 0.0, 0.0])
+new_pose = close_init_pose + goal_pose
+
+
+print("touch")
+rtde_c.moveL(new_pose, 0.1*ratio, 0.1*ratio)
+
+y = input("Done? Please enter: ")
+
+print("init")
+rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
+
+#joint_q = init_q
+#joint_speed = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#ratio = 0.8
+#goal_pose = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+#new_pose = far_init_pose
+
+
+#rtde_c.moveL([-0.143, -0.435, 0.20, -0.001, 3.12, 0.04], 0.5, 0.3)
 
 # Move to initial joint position
 # rtde_c.moveJ(joint_q,1.05*ratio,1.4*ratio)
