@@ -6,40 +6,75 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import matplotlib.patches as patches
+import rospy
+from std_msgs.msg import Float64MultiArray
+import time
+import asyncio
 
 #sys.exit()
-# Connect to robot
-rtde_c = RTDEControl("192.168.1.125")
-rtde_r = RTDEReceive("192.168.1.125")
 
-# Parameters
-dt = 1.0/500  # 2ms
-ratio = 0.05
-init_pose = rtde_r.getActualTCPPose()
-print(init_pose)
-close_init_pose = np.array([0.5599339422822445, -0.42228169821362205, -0.1739, -1.5464600006003504, 2.7065177497577166, 5.733511603223481e-05])
+if __name__ == '__main__':
+    rospy.init_node('gelsight', anonymous=True)
+    pub_force_torque = rospy.Publisher('/ft_sensor', Float64MultiArray, queue_size=10)
 
-far_init_pose = np.array([0.5599339422822445, -0.42228169821362205, -0.16, -1.5464600006003504, 2.7065177497577166, 5.733511603223481e-05])
+    # Connect to robot
+    rtde_c = RTDEControl("192.168.1.125")
+    rtde_r = RTDEReceive("192.168.1.125")
 
-rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
+    rtde_c.zeroFtSensor()
 
-print("init")
+    # Parameters
+    dt = 1.0/500  # 2ms
+    ratio = 0.05
+    init_pose = rtde_r.getActualTCPPose()
+    print(init_pose)
+    close_init_pose = np.array([0.5599339422822445, -0.42228169821362205, -0.1739, -1.5464600006003504, 2.7065177497577166, 5.733511603223481e-05])
 
-rtde_c.moveL(close_init_pose, 0.1*ratio, 0.1*ratio)
+    far_init_pose = np.array([0.5599339422822445, -0.42228169821362205, -0.16, -1.5464600006003504, 2.7065177497577166, 5.733511603223481e-05])
 
-print("close")
+    rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
 
-goal_pose = np.array([0.0, 0.0, -0.002, 0.0, 0.0, 0.0])
-new_pose = close_init_pose + goal_pose
+    print("init")
+
+    rtde_c.moveL(close_init_pose, 0.1*ratio, 0.1*ratio)
+
+    print("close")
+
+    goal_pose = np.array([0.0, 0.0, -0.002, 0.0, 0.0, 0.0])
+    new_pose = close_init_pose + goal_pose
 
 
-print("touch")
-rtde_c.moveL(new_pose, 0.1*ratio, 0.1*ratio)
+    print("touch")
+    rtde_c.moveL(new_pose, 0.1*ratio, 0.1*ratio)
 
-y = input("Done? Please enter: ")
+    #y = input("Done? Please enter: ")
 
-print("init")
-rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
+    #print("init")
+    #rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
+
+    while not rospy.is_shutdown():
+
+        temp_ft_sensor = rtde_r.getActualTCPForce()
+
+        ft_sensor = np.array([temp_ft_sensor])
+
+        #print(temp_ft_sensor)
+
+        ft_data_msg = Float64MultiArray()
+
+        ft_data_msg.data = ft_sensor.ravel().tolist()
+
+        pub_force_torque.publish(ft_data_msg)
+
+        #rtde_c.moveL(new_pose, 0.1*ratio, 0.1*ratio)
+
+        time.sleep(dt)
+
+    print("init")
+    rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
+
+    rtde_c.speedStop()
+    rtde_c.stopScript()
 
 #joint_q = init_q
 #joint_speed = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -151,9 +186,6 @@ rtde_c.moveL(far_init_pose, 0.1*ratio, 0.1*ratio)
 #         rtde_c.speedJ(joint_speed, acceleration, dt)
 
 #     rtde_c.waitPeriod(t_start)
-
-rtde_c.speedStop()
-rtde_c.stopScript()
 
 # # Convert lists to numpy arrays for easy plotting
 # error_q_array = np.array(error_q_list)
