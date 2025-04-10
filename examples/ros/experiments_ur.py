@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     print("close")
 
-    goal_pose = np.array([0.0, 0.0, -0.002, 0.0, 0.0, 0.0])
+    goal_pose = np.array([0.0, 0.0, -0.002, 0.0, 0.0, 0.0]) # ball
     new_pose = close_init_pose + goal_pose
 
 
@@ -54,17 +54,17 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-        temp_ft_sensor = rtde_r.getActualTCPForce()
+        #temp_ft_sensor = rtde_r.getActualTCPForce()
 
-        ft_sensor = np.array([temp_ft_sensor])
+        #ft_sensor = np.array([temp_ft_sensor])
 
         #print(temp_ft_sensor)
 
-        ft_data_msg = Float64MultiArray()
+        #ft_data_msg = Float64MultiArray()
 
-        ft_data_msg.data = ft_sensor.ravel().tolist()
+        #ft_data_msg.data = ft_sensor.ravel().tolist()
 
-        pub_force_torque.publish(ft_data_msg)
+        #pub_force_torque.publish(ft_data_msg)
 
         #rtde_c.moveL(new_pose, 0.1*ratio, 0.1*ratio)
 

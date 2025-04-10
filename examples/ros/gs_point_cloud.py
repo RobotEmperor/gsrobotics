@@ -11,6 +11,8 @@ from sensor_msgs.msg import PointCloud2
 import std_msgs.msg
 import sensor_msgs.point_cloud2 as pcl2
 
+import pandas as pd
+
 import gsdevice
 import gs3drecon
 import ros_numpy
@@ -32,7 +34,7 @@ def main(argv):
     # Set flags
     SAVE_VIDEO_FLAG = False
     GPU = True
-    MASK_MARKERS_FLAG = True
+    MASK_MARKERS_FLAG = False
     USE_ROI = False
     PUBLISH_ROS_PC = True
     SHOW_3D_NOW = True
@@ -100,6 +102,9 @@ def main(argv):
 
     print('press q on image to exit')
 
+    df = pd.DataFrame()
+    data = np.zeros((76800,3))
+
     ''' use this to plot just the 3d '''
     if SHOW_3D_NOW:
         vis3d = gs3drecon.Visualize3D(dev.imgh, dev.imgw, '', mmpp)
@@ -113,7 +118,7 @@ def main(argv):
             if USE_ROI:
                 f1 = f1[int(roi[1]):int(roi[1] + roi[3]), int(roi[0]):int(roi[0] + roi[2])]
             bigframe = cv2.resize(f1, (f1.shape[1] * 2, f1.shape[0] * 2))
-            #cv2.imshow('Image', bigframe)
+            cv2.imshow('Image', bigframe)
 
             # compute the depth map
             dm = nn.get_depthmap(f1, MASK_MARKERS_FLAG)
@@ -136,6 +141,10 @@ def main(argv):
 
 
                 xyz_array = ros_numpy.point_cloud2.pointcloud2_to_xyz_array(gelpcdros)
+                print(xyz_array.shape[0])
+
+                data = xyz_array
+
                 gs_max_z_msg = np.max(xyz_array[:,2])
                 gs_max_z_pub.publish(gs_max_z_msg)
 
@@ -143,13 +152,15 @@ def main(argv):
 
                 #print(np.shape(xyz_array))
 
-
-            #if cv2.waitKey(1) & 0xFF == ord('q'):
-            #    break
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+               break
             if SAVE_VIDEO_FLAG:
                 out.write(f1)
 
             rate.sleep()
+
+        df = pd.DataFrame(data, columns=['x', 'y', 'z'])
+        df.to_csv('data.csv', index=False)
 
     except KeyboardInterrupt:
         print('Interrupted!')
